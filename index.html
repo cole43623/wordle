@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Risolutore Wordle</title>
+    <style>
+        
+        body {
+            display: flex;
+            justify-content: center;
+            height: 125vh;
+            margin: 0;
+            overflow-x: auto;
+            background: url('sfondo.png') no-repeat center center fixed;
+            background-size: cover;
+        }
+        
+        #titolo{
+            position: absolute;
+            top: 10%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            font-size: 40px;
+            font-family: 'Helvetica Neue', 'Helvetica', sans-serif;
+            font-weight: 700;
+            color: #538d4e;
+            letter-spacing: 2px;
+        }
+        
+        #container {
+            position: absolute;
+            text-align: center;
+            top: 20%;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .slider-container {
+            text-align: center;
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+
+        input[type="range"] {
+            width: 300px;
+            height: 6px;
+            background: #ddd;
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #538d4e;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #538d4e;
+            cursor: pointer;
+            border-radius: 50%;
+            border: none;
+        }
+
+        #lunghezzaValore {
+            font-weight: 700;
+            color: #538d4e;
+            margin-left: 10px;
+            font-size: x-large;
+        }
+    
+        /* Stili CSS per le caselle */
+        .casella {
+            width: 50.4px;
+            height: 50.4px;
+            text-align: center;
+            font-size: 24px;
+            border: 2px solid #d3d6da;
+            margin: 2px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            caret-color: transparent;
+            font-family: 'Helvetica Neue', 'Helvetica', sans-serif;
+            font-weight: 700;
+            border-radius: 4px;
+            transition: border-color 0.2s;
+        }
+
+        .casella:focus {
+            border-color: #878a8c;
+            outline: none;
+        }
+
+        /* Stili CSS per il contenitore delle caselle */
+        .contenitore {
+            margin: 0 auto;
+            display: grid;
+			grid-template-columns: repeat(var(--len), 1fr);
+			gap: 4px;
+			width: max-content;
+            justify-content: center;
+            align-content: center;
+        }
+
+        /* Clear float per il contenitore delle caselle */
+        .contenitore::after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+        
+        .inviabutton {
+            background-color: #538d4e;
+            color: white;
+            margin-top: 20px;
+            padding: 12px 30px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+
+        .inviabutton:hover {
+            background-color: #3a7339;
+        }
+        
+        .parola{
+            font-size: 18px;
+            cursor: pointer;
+            font-family: 'Helvetica Neue', 'Helvetica', sans-serif;
+            padding: 10px 20px;
+            margin: 5px;
+            background: #f0f0f0;
+            border-radius: 6px;
+            display: inline-block;
+            transition: all 0.2s;
+        }
+
+        .parola:hover {
+            font-weight: 700;
+            background: #e0e0e0;
+        }
+        
+        #simbolo {
+            font-size: 22px;
+            position: absolute;
+            top: 18%;
+            right: 21%;
+            padding: 8px 16px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 3;
+        }
+
+        #simbolo:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+        
+        #aiuto {
+            line-height: 1.6;
+            font-size: 18px;
+            position: absolute;
+            top: 24%;
+            right: 13%;
+            width: 340px;
+            background: white;
+            border: none;
+            border-radius: 16px;
+            display: none;
+            pointer-events: none;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            color: #333;
+            z-index: 3;
+        }
+    </style>
+    <script src="https://kit.fontawesome.com/382ea6760c.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <script src="parole.js"></script>
+    <div id="titolo">RISOLUTORE WORDLE</div>
+    <div id="simbolo" onmouseover="mostra()" onmouseout="nascondi()">Aiuto  <span class="fa-regular fa-circle-question"></span></div>
+    <div id="aiuto">- Inserisci le parole come nel gioco.<br>- Fai doppio click su una casella per cambiarle colore.<br>- Premi invio e controlla le parole suggerite.<br>- Premi su una parola per continuare a giocare.</div>
+    <div id="container">
+        <font size="+3">Lunghezza parola:</font>
+        <div class="slider-container">
+            <input type="range" id="lunghezzaParola" name="lunghezzaParola" min="3" max="17" value="5">
+            <span id="lunghezzaValore">5</span>
+        </div>
+        <div class="contenitore" id="container2">
+        </div>
+        <button type="submit" class="inviabutton" onclick="myFunction()">INVIA</button>
+        <div class="contenitore3" id="container3">
+        </div>
+    </div>
+
+
+    <script>
+        function mostra(){
+            aiuto.style.display = "block";
+        }
+        function nascondi(){
+            aiuto.style.display = "none";
+        }
+        function parolapremuta(parola) {
+            const caselle = document.querySelectorAll(".casella");
+            const lun = caselle.length/6;
+            for (var i = 0; i < 6; i++) {
+                p="";
+                for (var j = 0; j < lun; j++) {p+=caselle[i*lun+j].textContent;}
+                if (p.length!=lun){
+                for (var j = 0; j < lun; j++) {caselle[i*lun+j].textContent=parola.substring(j,j+1);}
+                return;
+                }
+                }
+        }
+        
+        const slider = document.getElementById("lunghezzaParola");
+        const valoreOutput = document.getElementById("lunghezzaValore");
+
+        slider.addEventListener("input", function () {
+            valoreOutput.textContent = slider.value;
+            crea();
+        });
+        
+        
+        
+        // Funzione per limitare il contenuto di una casella a una sola lettera e convertire in maiuscolo
+        function limitaTesto(casella) {
+            let testo = casella.textContent;
+            if (testo.length > 1) {
+                testo = testo.charAt(0);
+            }
+            if (testo.toLowerCase() != testo.toUpperCase()){
+                casella.textContent = testo.toUpperCase();
+                passaAllaCasellaSuccessiva(casella)
+            } else {casella.textContent =""}
+        }
+        
+        function passaAllaCasellaSuccessiva(casella) {
+            const caselle = document.querySelectorAll(".casella");
+            const index = Array.from(caselle).indexOf(casella);
+            if (index < caselle.length - 1) {
+                caselle[index + 1].focus();
+            } else {
+                casella.blur(); // Rimuove il focus se siamo sull'ultima casella
+            }
+        }
+        
+        function passaAllaCasellaPrecedente(casella) {
+            const caselle = document.querySelectorAll(".casella");
+            const index = Array.from(caselle).indexOf(casella);
+            if (index > 0) {
+                caselle[index - 1].focus();
+                caselle[index - 1].setSelectionRange(1,1);
+            }
+        }
+        
+        function cancella(casella) {
+            const caselle = document.querySelectorAll(".casella");
+            const index = Array.from(caselle).indexOf(casella);
+            if (casella.textContent =="" && index > 0) {
+                caselle[index - 1].textContent ="";
+                passaAllaCasellaPrecedente(casella);}
+            else{casella.textContent ="";}
+        }
+        
+        const colori=["rgba(0, 0, 0, 0)","rgb(201, 180, 88)", "rgb(106, 170, 100)"];
+        function cambiaColoreSfondo(casella) {
+            casella.style.backgroundColor = colori[(colori.indexOf(getComputedStyle(casella).backgroundColor)+1)%3];
+        }
+        
+        function crea(){
+			container2.style.setProperty("--len", slider.value);
+            container2.innerHTML = "";
+            for (var i = 0; i < slider.value*6; i++) {
+              var casella = document.createElement("div");
+              casella.className = "casella";
+              casella.contentEditable = true;
+              casella.addEventListener("input", function() {
+                limitaTesto(this);
+              });
+              casella.addEventListener("dblclick", function() {
+                cambiaColoreSfondo(this);
+              });
+              casella.addEventListener("keydown", function(event) {
+                if (event.key === "ArrowLeft") {
+                    passaAllaCasellaPrecedente(this);
+                }
+              });
+              casella.addEventListener("keydown", function(event) {
+                if (event.key === "ArrowRight") {
+                    passaAllaCasellaSuccessiva(this);
+                }
+              });
+              casella.addEventListener("keydown", function(event) {
+                if (event.key === "Backspace") {
+                    cancella(this);
+                }
+              });
+              container2.appendChild(casella);
+            }
+        }
+        
+        
+        function count(parola,lettera) {
+            let contatore = 0;
+            for (let i = 0; i < parola.length; i++) {
+                if (parola[i] === lettera) {contatore++;}
+            }
+            return contatore;
+        }
+        
+        
+        function myFunction(){
+            const caselle = document.querySelectorAll(".casella");
+            const lun = caselle.length/6;
+            let p = tutte[lun-3];
+            let sol = new Array(lun).fill("");
+            for (var i = 0; i < 6; i++) {
+                let tentativo=[];
+                let indici=[];
+                for (var j = 0; j < lun; j++) {
+                    tentativo.push(caselle[i*lun+j].textContent);
+                    indici.push(colori.indexOf(getComputedStyle(caselle[i*lun+j]).backgroundColor));
+                }
+                if (tentativo.join("").length!=lun){break;}
+                
+                let l=[];
+                let g="";
+                let b=new Array(lun).fill("");
+                
+                for (var k = 0; k < lun; k++) {
+                    if (indici[k]==2){
+                        if (sol[k]==""){sol[k]=tentativo[k];}
+                        else{if (tentativo[k]!=sol[k]){
+                            console.log("Errore");
+                            return;}}
+                    }else{if(indici[k]==1){
+                        b[k]+=tentativo[k];
+                        g+=tentativo[k];}else{
+                        for (var t = 0; t < lun; t++){
+                            if (indici[t]!=2 && (!g.includes(tentativo[k]) || t==k) ){b[t]+=tentativo[k];}
+                            }
+                        }}
+                }
+
+                let b2="";
+                for (var k = 0; k < lun; k++) {
+                    if (indici[k]==0){b2+=tentativo[k];}
+                }
+
+                for (const mm of p) {
+                    if (mm.length==lun){
+                        let f=1;
+                        let kop="";
+                        for (var k = 0; k < lun; k++) {
+                            if (indici[k]!=2){kop+=mm.substring(k, k+1);}
+                            if (sol[k]!="" && sol[k]!=mm.substring(k, k+1)){
+                            f=0;
+                            break;}
+                            if (b[k].includes(mm.substring(k, k+1))){
+                            f=0;
+                            break;}
+                        }
+                        let kop3=kop;
+                        
+                        for (var oo = 0; oo < g.length; oo++) {
+                            let y=g.substring(oo, oo+1);
+                            if ((b2.includes(y) && count(g,y)!=count(kop,y)) || !(kop3.includes(y))){
+                               f=0;
+                                break;}else{kop3=kop3.replace(new RegExp(y), '')}
+                        }
+                        
+                        if (f==1){l.push(mm);}
+                    }
+                }
+                
+                p=l;
+            }
+            
+            let num=p.length
+            var container3 = document.getElementById("container3");
+            document.getElementById("container3").innerHTML="";
+            var titolo = document.createElement("p");
+            if (num==0){titolo.textContent="Nessuna parola trovata";}
+            if (num==1){titolo.textContent="La parola è:";}
+            if (num>1 && num<6){titolo.textContent = num+" parole possibili:";}
+            if (num>5){titolo.textContent = num+" parole possibili, tra cui:";}
+            titolo.style.fontSize = "x-large";
+            container3.appendChild(titolo);
+            for (var k = 0; k < Math.min(num,5); k++) {
+                var elementoParola = document.createElement("p");
+                elementoParola.className = 'parola';
+                elementoParola.textContent = p[k];
+                container3.appendChild(elementoParola);
+                elementoParola.addEventListener("click", (function(k) {
+                  return function() {
+                    parolapremuta(p[k]);
+                  };
+                })(k));
+            }
+        }
+
+        slider.value = "5";
+        crea();
+        const casell = document.querySelector(".casella");
+        casell.focus()
+    </script>
+</body>
+</html>
