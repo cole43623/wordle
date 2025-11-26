@@ -305,8 +305,17 @@
               casella.addEventListener("input", function() {
                 limitaTesto(this);
               });
-              casella.addEventListener("dblclick", function() {
+              casella.addEventListener("mousedown", function(event) {
+                if (event.detail > 1) {
+                  event.preventDefault();
+                }
+              });
+              casella.addEventListener("dblclick", function(event) {
+                event.preventDefault();
                 cambiaColoreSfondo(this);
+              });
+              casella.addEventListener("selectstart", function(event) {
+                event.preventDefault();
               });
               casella.addEventListener("keydown", function(event) {
                 if (event.key === "ArrowLeft") {
