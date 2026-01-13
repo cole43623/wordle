@@ -13,21 +13,24 @@
         body {
             margin: 0;
             padding: 0;
-            height: 100vh;
+            height: 100dvh;
+            /* Usa dynamic viewport height per mobile */
             width: 100vw;
-            overflow: hidden;
-            background: url('sfondo.png') no-repeat center center fixed;
+            overflow-y: auto;
+            /* Abilita lo scroll verticale se necessario */
+            background: black;
             background-size: cover;
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            touch-action: none;
-            /* Disabilita zoom e scroll elastico */
+            touch-action: pan-y;
+            /* Permetti scroll verticale */
         }
 
         /* Layout Principale a Schermo Intero */
         #main-layout {
             display: flex;
             flex-direction: column;
-            height: 100%;
+            min-height: 100dvh;
+            /* Usa min-height per permettere espansione */
             width: 100%;
             max-width: 600px;
             margin: 0 auto;
@@ -156,6 +159,24 @@
             font-size: 11px;
             background-color: #a4a4a4;
             color: white;
+        }
+
+        .key.corretto {
+            background-color: #6aaa64;
+            color: white;
+            border-color: #6aaa64;
+        }
+
+        .key.presente {
+            background-color: #c9b458;
+            color: white;
+            border-color: #c9b458;
+        }
+
+        .key.assente {
+            background-color: #3a3a3c;
+            color: white;
+            border-color: #3a3a3c;
         }
 
         /* Modals */
@@ -421,7 +442,7 @@
             }
 
             if (parolaInserita.length === parseInt(len)) {
-                if (!tutte[len - 3].includes(parolaInserita) && 0) {
+                if (!tutte[len - 3].includes(parolaInserita)) {
                     alert("Parola non valida!");
                     return;
                 }
@@ -474,6 +495,28 @@
             }
             for (let j = 0; j < len; j++) {
                 caselle[rigaInizio + j].classList.add(stato[j]);
+                aggiornaColoreTasto(guess[j], stato[j]);
+            }
+        }
+
+        function aggiornaColoreTasto(lettera, stato) {
+            const keys = document.querySelectorAll(".key");
+            for (let key of keys) {
+                if (key.textContent === lettera) {
+                    if (stato === "corretto") {
+                        key.classList.remove("presente");
+                        key.classList.add("corretto");
+                    } else if (stato === "presente") {
+                        if (!key.classList.contains("corretto")) {
+                            key.classList.add("presente");
+                        }
+                    } else if (stato === "assente") {
+                        if (!key.classList.contains("corretto") && !key.classList.contains("presente")) {
+                            key.classList.add("assente");
+                        }
+                    }
+                    break;
+                }
             }
         }
 
@@ -543,6 +586,11 @@
             document.getElementById("statsModal").classList.remove("active");
             level++;
             currentRow = 0;
+            // Reset tastiera
+            const keys = document.querySelectorAll(".key");
+            keys.forEach(key => {
+                key.classList.remove("corretto", "presente", "assente");
+            });
             secretWord = getWord();
             crea();
         }
@@ -558,7 +606,7 @@
         }
 
         const randomSeed = parseInt(sessionStorage.getItem("randomseed")) || 0;
-        let pool = tutte[len - 3] || tutte[0];
+        let pool = [...(tutte[len - 3] || tutte[0])];
 
         function getWord() {
             const rng = mulberry32(randomSeed + level);
