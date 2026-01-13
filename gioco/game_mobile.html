@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Risolutore Wordle - Mobile</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            background: url('sfondo.png') no-repeat center center fixed;
+            background-size: cover;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            touch-action: none;
+            /* Disabilita zoom e scroll elastico */
+        }
+
+        /* Layout Principale a Schermo Intero */
+        #main-layout {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            /* Centra su tablet/desktop se necessario */
+            background: rgba(255, 255, 255, 0.1);
+            /* Leggero overlay */
+        }
+
+        #titolo {
+            flex-shrink: 0;
+            text-align: center;
+            font-size: 28px;
+            font-weight: 700;
+            color: #538d4e;
+            letter-spacing: 2px;
+            padding: 15px 0 5px 0;
+            text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.9);
+        }
+
+        /* Area di Gioco Centrale (espandibile) */
+        #game-area {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            padding: 10px;
+            overflow-y: auto;
+        }
+
+        /* Contenitore Griglia */
+        .contenitore {
+            display: grid;
+            grid-template-columns: repeat(var(--len), 1fr);
+            gap: 5px;
+            padding: 10px;
+            background: transparent;
+            width: 100%;
+            height: 100%;
+            align-content: center;
+            justify-content: center;
+        }
+
+        /* Stili Caselle */
+        .casella {
+            width: 100%;
+            aspect-ratio: 1/1;
+            max-width: 60px;
+            /* Dimensione massima per casella */
+            height: auto;
+            text-align: center;
+            font-size: 24px;
+            border: 2px solid #d3d6da;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 700;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.95);
+            user-select: none;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .casella.corretto {
+            background-color: #6aaa64;
+            color: white;
+            border-color: #6aaa64;
+        }
+
+        .casella.presente {
+            background-color: #c9b458;
+            color: white;
+            border-color: #c9b458;
+        }
+
+        .casella.assente {
+            background-color: #787c7e;
+            color: white;
+            border-color: #787c7e;
+        }
+
+        /* Tastiera Integrata nel Layout Flex */
+        #keyboard {
+            flex-shrink: 0;
+            width: 100%;
+            background: rgba(240, 240, 240, 0.95);
+            padding: 5px 5px 20px 5px;
+            /* Extra padding bottom per home bar iPhone */
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
+            box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .key-row {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 6px;
+            width: 100%;
+        }
+
+        .key {
+            flex: 1;
+            height: 48px;
+            margin: 0 2px;
+            border-radius: 4px;
+            background-color: #d3d6da;
+            color: #1a1a1b;
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 13px;
+            cursor: pointer;
+            user-select: none;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+            transition: transform 0.05s, background-color 0.1s;
+        }
+
+        .key:active {
+            transform: scale(0.92);
+            background-color: #bbb;
+        }
+
+        .key.wide {
+            flex: 1.5;
+            font-size: 11px;
+            background-color: #a4a4a4;
+            color: white;
+        }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 20px;
+            width: 85%;
+            max-width: 380px;
+            text-align: center;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-title {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1a1a1b;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            margin-top: 2px;
+            color: #787c7e;
+        }
+
+        .dist-container {
+            margin-bottom: 20px;
+        }
+
+        .dist-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 4px;
+            height: 18px;
+        }
+
+        .dist-num {
+            width: 20px;
+            font-size: 11px;
+            color: #787c7e;
+            text-align: right;
+            padding-right: 5px;
+        }
+
+        .dist-bar-bg {
+            flex-grow: 1;
+            height: 100%;
+            background: #f0f0f0;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .dist-bar {
+            height: 100%;
+            background: #787c7e;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            font-size: 10px;
+            font-weight: 700;
+            padding-right: 4px;
+            border-radius: 2px;
+        }
+
+        .dist-bar.highlight {
+            background: #6aaa64;
+        }
+
+        .dist-bar.loss-highlight {
+            background: #e74c3c;
+        }
+
+        .modal-button {
+            background: #6aaa64;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: 700;
+            border-radius: 8px;
+            width: 100%;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+    <script src="https://kit.fontawesome.com/382ea6760c.js" crossorigin="anonymous"></script>
+</head>
+
+<body>
+    <script src="parole.js"></script>
+
+    <div id="main-layout">
+        <div id="titolo">WORDLE - LIVELLO <span id="livelloVisualizzato">1</span></div>
+
+        <div id="game-area">
+            <div class="contenitore" id="container2"></div>
+        </div>
+
+        <div id="keyboard">
+            <div class="key-row">
+                <div class="key" onclick="pressKey('Q')">Q</div>
+                <div class="key" onclick="pressKey('W')">W</div>
+                <div class="key" onclick="pressKey('E')">E</div>
+                <div class="key" onclick="pressKey('R')">R</div>
+                <div class="key" onclick="pressKey('T')">T</div>
+                <div class="key" onclick="pressKey('Y')">Y</div>
+                <div class="key" onclick="pressKey('U')">U</div>
+                <div class="key" onclick="pressKey('I')">I</div>
+                <div class="key" onclick="pressKey('O')">O</div>
+                <div class="key" onclick="pressKey('P')">P</div>
+            </div>
+            <div class="key-row">
+                <div class="key" onclick="pressKey('A')">A</div>
+                <div class="key" onclick="pressKey('S')">S</div>
+                <div class="key" onclick="pressKey('D')">D</div>
+                <div class="key" onclick="pressKey('F')">F</div>
+                <div class="key" onclick="pressKey('G')">G</div>
+                <div class="key" onclick="pressKey('H')">H</div>
+                <div class="key" onclick="pressKey('J')">J</div>
+                <div class="key" onclick="pressKey('K')">K</div>
+                <div class="key" onclick="pressKey('L')">L</div>
+            </div>
+            <div class="key-row">
+                <div class="key wide" onclick="pressKey('ENTER')">INVIO</div>
+                <div class="key" onclick="pressKey('Z')">Z</div>
+                <div class="key" onclick="pressKey('X')">X</div>
+                <div class="key" onclick="pressKey('C')">C</div>
+                <div class="key" onclick="pressKey('V')">V</div>
+                <div class="key" onclick="pressKey('B')">B</div>
+                <div class="key" onclick="pressKey('N')">N</div>
+                <div class="key" onclick="pressKey('M')">M</div>
+                <div class="key wide" onclick="pressKey('DEL')"><i class="fa-solid fa-delete-left"></i></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Statistiche -->
+    <div class="modal-overlay" id="statsModal">
+        <div class="modal-content">
+            <div class="modal-title">Statistiche</div>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value" id="stat-played">0</div>
+                    <div class="stat-label">Giocate</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="stat-wins">0</div>
+                    <div class="stat-label">% Vinte</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="stat-streak">0</div>
+                    <div class="stat-label">Serie</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="stat-max-streak">0</div>
+                    <div class="stat-label">Record</div>
+                </div>
+            </div>
+
+            <div class="dist-container" id="dist-container"></div>
+
+            <div id="secretWordReveal" style="margin-bottom: 20px; display: none;">
+                La parola era: <strong id="revealedWord"></strong>
+            </div>
+
+            <button class="modal-button" onclick="prossimoLivello()">CONTINUA</button>
+        </div>
+    </div>
+
+
+    <script>
+        let currentRow = 0;
+        let level = 0;
+        const len = sessionStorage.getItem("lunghezzaParola") || 5;
+
+        // Statistiche
+        let stats = JSON.parse(localStorage.getItem("wordle_stats")) || {
+            played: 0,
+            wins: 0,
+            currentStreak: 0,
+            maxStreak: 0,
+            distribution: [0, 0, 0, 0, 0, 0, 0]
+        };
+
+        function crea() {
+            container2.style.setProperty("--len", len);
+            container2.innerHTML = "";
+            for (var i = 0; i < len * 6; i++) {
+                var casella = document.createElement("div");
+                casella.className = "casella";
+                container2.appendChild(casella);
+            }
+            document.getElementById("livelloVisualizzato").textContent = level + 1;
+        }
+
+        function pressKey(key) {
+            const caselle = document.querySelectorAll(".casella");
+            const rowStart = currentRow * len;
+
+            if (key === 'ENTER') {
+                myFunction();
+            } else if (key === 'DEL') {
+                for (let i = len - 1; i >= 0; i--) {
+                    if (caselle[rowStart + i].textContent !== "") {
+                        caselle[rowStart + i].textContent = "";
+                        break;
+                    }
+                }
+            } else {
+                for (let i = 0; i < len; i++) {
+                    if (caselle[rowStart + i].textContent === "") {
+                        caselle[rowStart + i].textContent = key;
+                        break;
+                    }
+                }
+            }
+        }
+
+        function myFunction() {
+            const caselle = document.querySelectorAll(".casella");
+            let parolaInserita = "";
+            for (let j = 0; j < len; j++) {
+                parolaInserita += caselle[currentRow * len + j].textContent;
+            }
+
+            if (parolaInserita.length === parseInt(len)) {
+                if (!tutte[len - 3].includes(parolaInserita) && 0) {
+                    alert("Parola non valida!");
+                    return;
+                }
+
+                coloracaselle();
+
+                if (parolaInserita === secretWord) {
+                    setTimeout(() => {
+                        salvaStatistiche(true, currentRow);
+                        mostraStatistiche(true);
+                    }, 500);
+                } else if (currentRow < 5) {
+                    currentRow++;
+                } else {
+                    setTimeout(() => {
+                        salvaStatistiche(false, 6);
+                        mostraStatistiche(false);
+                    }, 500);
+                }
+            }
+        }
+
+        function coloracaselle() {
+            const caselle = document.querySelectorAll(".casella");
+            const rigaInizio = currentRow * len;
+            const guess = [];
+            for (let j = 0; j < len; j++) {
+                guess.push(caselle[rigaInizio + j].textContent);
+            }
+
+            const conteggioSegreto = {};
+            for (let char of secretWord) {
+                conteggioSegreto[char] = (conteggioSegreto[char] || 0) + 1;
+            }
+            const stato = new Array(parseInt(len)).fill("assente");
+
+            for (let j = 0; j < len; j++) {
+                if (guess[j] === secretWord[j]) {
+                    stato[j] = "corretto";
+                    conteggioSegreto[guess[j]]--;
+                }
+            }
+            for (let j = 0; j < len; j++) {
+                if (stato[j] !== "corretto") {
+                    if (conteggioSegreto[guess[j]] > 0) {
+                        stato[j] = "presente";
+                        conteggioSegreto[guess[j]]--;
+                    }
+                }
+            }
+            for (let j = 0; j < len; j++) {
+                caselle[rigaInizio + j].classList.add(stato[j]);
+            }
+        }
+
+        function salvaStatistiche(vittoria, tentativi) {
+            stats.played++;
+            if (vittoria) {
+                stats.wins++;
+                stats.currentStreak++;
+                if (stats.currentStreak > stats.maxStreak) stats.maxStreak = stats.currentStreak;
+                stats.distribution[tentativi]++;
+            } else {
+                stats.currentStreak = 0;
+                stats.distribution[6]++;
+            }
+            localStorage.setItem("wordle_stats", JSON.stringify(stats));
+        }
+
+        function mostraStatistiche(vittoria = true) {
+            document.getElementById("stat-played").textContent = stats.played;
+            const winPct = stats.played > 0 ? Math.round((stats.wins / stats.played) * 100) : 0;
+            document.getElementById("stat-wins").textContent = winPct;
+            document.getElementById("stat-streak").textContent = stats.currentStreak;
+            document.getElementById("stat-max-streak").textContent = stats.maxStreak;
+
+            const distContainer = document.getElementById("dist-container");
+            distContainer.innerHTML = "";
+            const maxVal = Math.max(...stats.distribution) || 1;
+
+            for (let i = 0; i < 7; i++) {
+                const row = document.createElement("div");
+                row.className = "dist-row";
+                const num = document.createElement("div");
+                num.className = "dist-num";
+                num.innerHTML = i < 6 ? i + 1 : '<i class="fa-solid fa-xmark" style="color: #e74c3c"></i>';
+
+                const bg = document.createElement("div");
+                bg.className = "dist-bar-bg";
+                const bar = document.createElement("div");
+                let barClass = "dist-bar";
+                if (vittoria && currentRow === i) barClass += " highlight";
+                else if (!vittoria && i === 6) barClass += " loss-highlight";
+                bar.className = barClass;
+
+                const val = stats.distribution[i];
+                const width = Math.max((val / maxVal) * 100, 7);
+                bar.style.width = width + "%";
+                bar.textContent = val;
+
+                bg.appendChild(bar);
+                row.appendChild(num);
+                row.appendChild(bg);
+                distContainer.appendChild(row);
+            }
+
+            const reveal = document.getElementById("secretWordReveal");
+            if (!vittoria) {
+                document.getElementById("revealedWord").textContent = secretWord;
+                reveal.style.display = "block";
+            } else {
+                reveal.style.display = "none";
+            }
+
+            document.getElementById("statsModal").classList.add("active");
+        }
+
+        function prossimoLivello() {
+            document.getElementById("statsModal").classList.remove("active");
+            level++;
+            currentRow = 0;
+            secretWord = getWord();
+            crea();
+        }
+
+        function mulberry32(seed) {
+            let t = seed;
+            return function () {
+                t += 0x6D2B79F5;
+                let r = Math.imul(t ^ (t >>> 15), t | 1);
+                r ^= r + Math.imul(r ^ (r >>> 7), r | 61);
+                return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+            };
+        }
+
+        const randomSeed = parseInt(sessionStorage.getItem("randomseed")) || 0;
+        let pool = tutte[len - 3] || tutte[0];
+
+        function getWord() {
+            const rng = mulberry32(randomSeed + level);
+            const index = Math.floor(rng() * pool.length);
+            const word = pool[index];
+            pool.splice(index, 1);
+            return word;
+        }
+
+        let secretWord = getWord();
+        crea();
+
+    </script>
+</body>
+
+</html>

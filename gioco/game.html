@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Risolutore Wordle</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            height: 125vh;
+            margin: 0;
+            overflow-x: auto;
+            background: url('sfondo.png') no-repeat center center fixed;
+            background-size: cover;
+        }
+
+        #titolo {
+            position: absolute;
+            top: 10%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            font-size: 40px;
+            font-family: 'Helvetica Neue', 'Helvetica', sans-serif;
+            font-weight: 700;
+            color: #538d4e;
+            letter-spacing: 2px;
+        }
+
+        #container {
+            position: absolute;
+            text-align: center;
+            top: 20%;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .slider-container {
+            text-align: center;
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+
+        input[type="range"] {
+            width: 300px;
+            height: 6px;
+            background: #ddd;
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #538d4e;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #538d4e;
+            cursor: pointer;
+            border-radius: 50%;
+            border: none;
+        }
+
+        #lunghezzaValore {
+            font-weight: 700;
+            color: #538d4e;
+            margin-left: 10px;
+            font-size: x-large;
+        }
+
+        /* Stili CSS per le caselle */
+        .casella {
+            width: 50.4px;
+            height: 50.4px;
+            text-align: center;
+            font-size: 24px;
+            border: 2px solid #d3d6da;
+            margin: 2px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            caret-color: transparent;
+            font-family: 'Helvetica Neue', 'Helvetica', sans-serif;
+            font-weight: 700;
+            border-radius: 4px;
+            transition: border-color 0.2s;
+        }
+
+        .casella:focus {
+            border-color: #878a8c;
+            outline: none;
+        }
+
+        .casella.disabilitata {
+            pointer-events: none;
+            background-color: #f8f8f8;
+            border-color: #e2e8f0;
+        }
+
+        .casella.corretto {
+            background-color: #6aaa64;
+            color: white;
+            border-color: #6aaa64;
+        }
+
+        .casella.presente {
+            background-color: #c9b458;
+            color: white;
+            border-color: #c9b458;
+        }
+
+        .casella.assente {
+            background-color: #787c7e;
+            color: white;
+            border-color: #787c7e;
+        }
+
+        /* Stili CSS per il contenitore delle caselle */
+        .contenitore {
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(var(--len), 1fr);
+            gap: 4px;
+            width: max-content;
+            justify-content: center;
+            align-content: center;
+        }
+
+        /* Clear float per il contenitore delle caselle */
+        .contenitore::after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+
+        .inviabutton {
+            background-color: #538d4e;
+            color: white;
+            margin-top: 20px;
+            padding: 12px 30px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+
+        .inviabutton:hover {
+            background-color: #3a7339;
+        }
+
+        .parola {
+            font-size: 18px;
+            cursor: pointer;
+            font-family: 'Helvetica Neue', 'Helvetica', sans-serif;
+            padding: 10px 20px;
+            margin: 5px;
+            background: #f0f0f0;
+            border-radius: 6px;
+            display: inline-block;
+            transition: all 0.2s;
+        }
+
+        .parola:hover {
+            font-weight: 700;
+            background: #e0e0e0;
+        }
+
+        #simbolo {
+            font-size: 22px;
+            position: absolute;
+            top: 18%;
+            right: 21%;
+            padding: 8px 16px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 3;
+        }
+
+        #simbolo:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        #aiuto {
+            line-height: 1.6;
+            font-size: 18px;
+            position: absolute;
+            top: 24%;
+            right: 13%;
+            width: 340px;
+            background: white;
+            border: none;
+            border-radius: 16px;
+            display: none;
+            pointer-events: none;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            color: #333;
+            z-index: 3;
+        }
+
+        /* Modal Stili */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(8px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            text-align: center;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 25px;
+            color: #1a1a1b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 400;
+            color: #1a1a1b;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #1a1a1b;
+            margin-top: 5px;
+        }
+
+        .dist-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-align: left;
+            text-transform: uppercase;
+        }
+
+        .dist-container {
+            margin-bottom: 25px;
+        }
+
+        .dist-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 4px;
+            height: 20px;
+        }
+
+        .dist-num {
+            width: 15px;
+            font-size: 14px;
+            margin-right: 5px;
+            text-align: center;
+        }
+
+        .dist-bar-bg {
+            flex-grow: 1;
+            height: 100%;
+            background: #f0f0f0;
+            border-radius: 2px;
+            position: relative;
+        }
+
+        .dist-bar {
+            height: 100%;
+            background: #787c7e;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: 2px;
+            min-width: 20px;
+            transition: width 1s ease-out;
+        }
+
+        .dist-bar.highlight {
+            background: #6aaa64;
+        }
+
+        .dist-bar.loss-highlight {
+            background: #e74c3c;
+        }
+
+        .modal-button {
+            background: #6aaa64;
+            color: white;
+            border: none;
+            padding: 12px 40px;
+            font-size: 18px;
+            font-weight: 700;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 10px;
+        }
+
+        .modal-button:hover {
+            background: #538d4e;
+        }
+    </style>
+    <script src="https://kit.fontawesome.com/382ea6760c.js" crossorigin="anonymous"></script>
+</head>
+
+<body>
+    <script src="parole.js"></script>
+    <div id="titolo">WORDLE - LIVELLO <span id="livelloVisualizzato">1</span></div>
+    <div id="container">
+        <div class="contenitore" id="container2">
+        </div>
+        <button type="submit" class="inviabutton" onclick="myFunction()">INVIA</button>
+    </div>
+
+    <!-- Modal Statistiche -->
+    <div class="modal-overlay" id="statsModal">
+        <div class="modal-content">
+            <div class="modal-title">Statistiche</div>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value" id="stat-played">0</div>
+                    <div class="stat-label">Giocate</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="stat-wins">0</div>
+                    <div class="stat-label">% Vinte</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="stat-streak">0</div>
+                    <div class="stat-label">Serie attuale</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="stat-max-streak">0</div>
+                    <div class="stat-label">Serie record</div>
+                </div>
+            </div>
+
+            <div class="dist-title">Distribuzione tentativi</div>
+            <div class="dist-container" id="dist-container">
+                <!-- Bar chart will be generated here -->
+            </div>
+
+            <div id="secretWordReveal" style="margin-bottom: 20px; display: none;">
+                La parola era: <strong id="revealedWord"></strong>
+            </div>
+
+            <button class="modal-button" onclick="prossimoLivello()">CONTINUA</button>
+        </div>
+    </div>
+
+
+    <script>
+        let currentRow = 0;
+        let level = 0;
+
+        let stats = JSON.parse(localStorage.getItem("wordle_stats")) || {
+            played: 0,
+            wins: 0,
+            currentStreak: 0,
+            maxStreak: 0,
+            distribution: [0, 0, 0, 0, 0, 0, 0] // Ultimo indice per sconfitte
+        };
+
+        function salvaStatistiche(vittoria, tentativi) {
+            stats.played++;
+            if (vittoria) {
+                stats.wins++;
+                stats.currentStreak++;
+                if (stats.currentStreak > stats.maxStreak) stats.maxStreak = stats.currentStreak;
+                stats.distribution[tentativi]++;
+            } else {
+                stats.currentStreak = 0;
+                stats.distribution[6]++;
+            }
+            localStorage.setItem("wordle_stats", JSON.stringify(stats));
+        }
+
+        function mostraStatistiche(vittoria = true) {
+            document.getElementById("stat-played").textContent = stats.played;
+            const winPct = stats.played > 0 ? Math.round((stats.wins / stats.played) * 100) : 0;
+            document.getElementById("stat-wins").textContent = winPct;
+            document.getElementById("stat-streak").textContent = stats.currentStreak;
+            document.getElementById("stat-max-streak").textContent = stats.maxStreak;
+
+            const distContainer = document.getElementById("dist-container");
+            distContainer.innerHTML = "";
+            const maxVal = Math.max(...stats.distribution) || 1;
+
+            for (let i = 0; i < 7; i++) {
+                const row = document.createElement("div");
+                row.className = "dist-row";
+
+                const num = document.createElement("div");
+                num.className = "dist-num";
+                num.style.width = "25px"; // Slightly wider for icon
+                num.innerHTML = i < 6 ? i + 1 : '<i class="fa-solid fa-xmark" style="color: #e74c3c"></i>';
+
+                const bg = document.createElement("div");
+                bg.className = "dist-bar-bg";
+
+                const bar = document.createElement("div");
+                let barClass = "dist-bar";
+                if (vittoria && currentRow === i) {
+                    barClass += " highlight";
+                } else if (!vittoria && i === 6) {
+                    barClass += " loss-highlight";
+                }
+                bar.className = barClass;
+
+                const val = stats.distribution[i];
+                const width = Math.max((val / maxVal) * 100, 7);
+                bar.style.width = "0%";
+                setTimeout(() => bar.style.width = width + "%", 100);
+                bar.textContent = val;
+
+                bg.appendChild(bar);
+                row.appendChild(num);
+                row.appendChild(bg);
+                distContainer.appendChild(row);
+            }
+
+            const reveal = document.getElementById("secretWordReveal");
+            if (!vittoria) {
+                document.getElementById("revealedWord").textContent = secretWord;
+                reveal.style.display = "block";
+            } else {
+                reveal.style.display = "none";
+            }
+
+            document.getElementById("statsModal").classList.add("active");
+        }
+
+        function prossimoLivello() {
+            document.getElementById("statsModal").classList.remove("active");
+            level++;
+            currentRow = 0;
+            secretWord = getWord();
+            crea();
+        }
+
+        function aggiornaStatoCaselle() {
+            const caselle = document.querySelectorAll(".casella");
+            caselle.forEach((casella, index) => {
+                const rigaSotto = Math.floor(index / len) > currentRow;
+                const rigaSopra = Math.floor(index / len) < currentRow;
+
+                if (rigaSotto) {
+                    casella.classList.add("disabilitata");
+                    casella.contentEditable = false;
+                } else if (rigaSopra) {
+                    casella.classList.add("disabilitata");
+                    casella.contentEditable = false;
+                } else {
+                    casella.classList.remove("disabilitata");
+                    casella.contentEditable = true;
+                }
+            });
+            // Focus sulla prima casella della riga corrente
+            const primaCasellaCorrente = caselle[currentRow * len];
+            if (primaCasellaCorrente) primaCasellaCorrente.focus();
+        }
+
+
+
+
+        const valoreOutput = document.getElementById("lunghezzaValore");
+
+        const len = sessionStorage.getItem("lunghezzaParola");
+
+        // Funzione per limitare il contenuto di una casella a una sola lettera e convertire in maiuscolo
+        function limitaTesto(casella) {
+            let testo = casella.textContent;
+            if (testo.length > 1) {
+                testo = testo.charAt(0);
+            }
+            if (testo.toLowerCase() != testo.toUpperCase()) {
+                casella.textContent = testo.toUpperCase();
+                passaAllaCasellaSuccessiva(casella)
+            } else { casella.textContent = "" }
+        }
+
+        function passaAllaCasellaSuccessiva(casella) {
+            const caselle = document.querySelectorAll(".casella");
+            const index = Array.from(caselle).indexOf(casella);
+            if (index % len != len - 1) {
+                caselle[index + 1].focus();
+            }
+        }
+
+        function passaAllaCasellaPrecedente(casella) {
+            const caselle = document.querySelectorAll(".casella");
+            const index = Array.from(caselle).indexOf(casella);
+            if (index % len != 0) {
+                caselle[index - 1].focus();
+            }
+        }
+
+        function cancella(casella) {
+            const caselle = document.querySelectorAll(".casella");
+            const index = Array.from(caselle).indexOf(casella);
+            if (casella.textContent == "" && index % len != 0) {
+                caselle[index - 1].textContent = "";
+                passaAllaCasellaPrecedente(casella);
+            }
+            else { casella.textContent = ""; }
+        }
+
+
+        function crea() {
+            container2.style.setProperty("--len", len);
+            container2.innerHTML = "";
+            for (var i = 0; i < len * 6; i++) {
+                var casella = document.createElement("div");
+                casella.className = "casella";
+                casella.contentEditable = true;
+                casella.addEventListener("input", function () {
+                    limitaTesto(this);
+                });
+                casella.addEventListener("keydown", function (event) {
+                    if (event.key === "ArrowLeft") {
+                        passaAllaCasellaPrecedente(this);
+                    }
+                });
+                casella.addEventListener("keydown", function (event) {
+                    if (event.key === "ArrowRight") {
+                        passaAllaCasellaSuccessiva(this);
+                    }
+                });
+                casella.addEventListener("keydown", function (event) {
+                    if (event.key === "Backspace") {
+                        cancella(this);
+                    }
+                });
+                container2.appendChild(casella);
+            }
+            aggiornaStatoCaselle();
+            document.getElementById("livelloVisualizzato").textContent = level + 1;
+            console.log("Parola segreta:", secretWord);
+        }
+
+
+        function coloracaselle() {
+            const caselle = document.querySelectorAll(".casella");
+            const rigaInizio = currentRow * len;
+            const guess = [];
+            for (let j = 0; j < len; j++) {
+                guess.push(caselle[rigaInizio + j].textContent);
+            }
+
+            // Conta le lettere nella parola segreta
+            const conteggioSegreto = {};
+            for (let char of secretWord) {
+                conteggioSegreto[char] = (conteggioSegreto[char] || 0) + 1;
+            }
+
+            const stato = new Array(parseInt(len)).fill("assente");
+
+            // Primo passaggio: identifica i verdi (corretti)
+            for (let j = 0; j < len; j++) {
+                if (guess[j] === secretWord[j]) {
+                    stato[j] = "corretto";
+                    conteggioSegreto[guess[j]]--;
+                }
+            }
+
+            // Secondo passaggio: identifica i gialli (presenti)
+            for (let j = 0; j < len; j++) {
+                if (stato[j] !== "corretto") {
+                    if (conteggioSegreto[guess[j]] > 0) {
+                        stato[j] = "presente";
+                        conteggioSegreto[guess[j]]--;
+                    }
+                }
+            }
+
+            // Applica le classi
+            for (let j = 0; j < len; j++) {
+                caselle[rigaInizio + j].classList.add(stato[j]);
+            }
+        }
+
+
+        function myFunction() {
+            const caselle = document.querySelectorAll(".casella");
+            let parolaInserita = "";
+            for (let j = 0; j < len; j++) {
+                parolaInserita += caselle[currentRow * len + j].textContent;
+            }
+
+            if (parolaInserita.length === parseInt(len)) {
+                if (!tutte[len - 3].includes(parolaInserita) && 0) {
+                    alert("Parola non valida!");
+                    return;
+                }
+                coloracaselle();
+                if (parolaInserita === secretWord) {
+                    setTimeout(() => {
+                        salvaStatistiche(true, currentRow);
+                        mostraStatistiche(true);
+                    }, 500);
+                } else if (currentRow < 5) {
+                    currentRow++;
+                    aggiornaStatoCaselle();
+                } else {
+                    setTimeout(() => {
+                        salvaStatistiche(false, 6);
+                        mostraStatistiche(false);
+                    }, 500);
+                }
+            } else {
+                alert("Completa la parola prima di inviare!");
+            }
+        }
+
+        function mulberry32(seed) {
+            let t = seed;
+            return function () {
+                t += 0x6D2B79F5;
+                let r = Math.imul(t ^ (t >>> 15), t | 1);
+                r ^= r + Math.imul(r ^ (r >>> 7), r | 61);
+                return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+            };
+        }
+
+        const randomSeed = parseInt(sessionStorage.getItem("randomseed")) || 0;
+        let pool = tutte[len - 3] || tutte[0];
+
+        function getWord() {
+            const rng = mulberry32(randomSeed + level);
+            const index = Math.floor(rng() * pool.length);
+            const word = pool[index];
+            pool.splice(index, 1);
+            return word;
+        }
+
+        let secretWord = getWord();
+        crea();
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+                myFunction();
+            }
+        });
+
+        const casell = document.querySelector(".casella");
+        casell.focus()
+    </script>
+</body>
+
+</html>

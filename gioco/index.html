@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wordle - Impostazioni</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6aaa64;
+            --primary-dark: #538d4e;
+            --gray: #787c7e;
+            --light-gray: #d3d6da;
+            --bg: #f8f9fa;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: url('sfondo.png') no-repeat center center fixed;
+            background-size: cover;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        #container {
+            background: white;
+            padding: 40px;
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+            backdrop-filter: blur(5px);
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        #titolo {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--primary-dark);
+            margin-bottom: 30px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .section-label {
+            display: block;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #1a1a1b;
+        }
+
+        .slider-container {
+            margin-bottom: 30px;
+            padding: 0 10px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            background: var(--light-gray);
+            border-radius: 4px;
+            outline: none;
+            -webkit-appearance: none;
+            margin: 15px 0;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            background: var(--primary);
+            cursor: pointer;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        #lunghezzaValore {
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 24px;
+        }
+
+        .seed-group {
+            margin-bottom: 40px;
+        }
+
+        .seed-input-wrapper {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        #randomseed {
+            flex-grow: 1;
+            padding: 12px 15px;
+            border: 2px solid var(--light-gray);
+            border-radius: 12px;
+            font-size: 18px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+            text-align: center;
+        }
+
+        #randomseed:focus {
+            border-color: var(--primary);
+        }
+
+        .btn-icon {
+            background: var(--light-gray);
+            border: none;
+            width: 50px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 20px;
+            color: #444;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-icon:hover {
+            background: #bdbdbd;
+            transform: rotate(30deg);
+        }
+
+        .inviabutton {
+            background-color: var(--primary);
+            color: white;
+            width: 100%;
+            padding: 16px;
+            font-size: 20px;
+            cursor: pointer;
+            border: none;
+            border-radius: 14px;
+            font-weight: 700;
+            transition: all 0.2s;
+            box-shadow: 0 4px 15px rgba(106, 170, 100, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .inviabutton:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(106, 170, 100, 0.4);
+        }
+
+        .inviabutton:active {
+            transform: translateY(0);
+        }
+    </style>
+    <script src="https://kit.fontawesome.com/382ea6760c.js" crossorigin="anonymous"></script>
+</head>
+
+<body>
+    <div id="container">
+        <div id="titolo">WORDLE</div>
+
+        <div class="slider-container">
+            <span class="section-label">Lunghezza parola</span>
+            <input type="range" id="lunghezzaParola" min="3" max="17" value="5">
+            <div id="lunghezzaValore">5</div>
+        </div>
+
+        <div class="seed-group">
+            <span class="section-label">Seed Partita</span>
+            <div class="seed-input-wrapper">
+                <input type="number" id="randomseed" value="424242">
+                <button title="Random Seed" class="btn-icon" onclick="genRandomSeed()">
+                    <i class="fa-solid fa-dice"></i>
+                </button>
+            </div>
+        </div>
+
+        <button class="inviabutton" onclick="startInvia()">
+            INIZIA PARTITA <i class="fa-solid fa-play" style="margin-left: 10px;"></i>
+        </button>
+    </div>
+
+    <script>
+        const slider = document.getElementById("lunghezzaParola");
+        const valoreOutput = document.getElementById("lunghezzaValore");
+
+        slider.addEventListener("input", function () {
+            valoreOutput.textContent = slider.value;
+        });
+
+        function startInvia() {
+            const randomseed = document.getElementById("randomseed");
+            const lunghezzaParola = document.getElementById("lunghezzaParola");
+            sessionStorage.setItem("randomseed", randomseed.value);
+            sessionStorage.setItem("lunghezzaParola", lunghezzaParola.value);
+            if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+                window.location.href = "game_mobile.html";
+            } else {
+                window.location.href = "game.html";
+            }
+        }
+
+        function genRandomSeed() {
+            const randomseed = document.getElementById("randomseed");
+            randomseed.value = Math.floor(Math.random() * 10000000);
+
+            // Animazione icona
+            const icon = document.querySelector(".btn-icon i");
+            icon.classList.add("fa-spin");
+            setTimeout(() => icon.classList.remove("fa-spin"), 500);
+        }
+
+        // Recupera valori salvati se esistono
+        if (sessionStorage.getItem("lunghezzaParola")) {
+            slider.value = sessionStorage.getItem("lunghezzaParola");
+            valoreOutput.textContent = slider.value;
+        }
+        if (sessionStorage.getItem("randomseed")) {
+            document.getElementById("randomseed").value = sessionStorage.getItem("randomseed");
+        }
+    </script>
+</body>
+
+</html>
