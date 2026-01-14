@@ -234,11 +234,20 @@
             z-index: 1000;
             opacity: 0;
             transition: opacity 0.3s ease;
+            pointer-events: none;
         }
 
         .modal-overlay.active {
             display: flex;
             opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-overlay.minimized {
+            justify-content: flex-end;
+            align-items: flex-start;
+            background: transparent;
+            backdrop-filter: none;
         }
 
         .modal-content {
@@ -249,13 +258,58 @@
             max-width: 450px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             transform: scale(0.9);
-            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), all 0.3s ease;
             text-align: center;
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
         }
 
         .modal-overlay.active .modal-content {
             transform: scale(1);
+        }
+
+        .modal-overlay.minimized .modal-content {
+            width: 300px;
+            max-width: 90vw;
+            padding: 12px 15px;
+            margin: 10px;
+            border-radius: 12px;
+        }
+
+        .modal-overlay.minimized .modal-content-body {
+            display: none;
+        }
+
+        .modal-overlay.minimized .modal-title {
+            margin-bottom: 0;
+            font-size: 16px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-minimize-btn {
+            background: #d3d6da;
+            color: #1a1a1b;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 14px;
+            transition: background-color 0.2s;
+            flex-shrink: 0;
+        }
+
+        .modal-minimize-btn:hover {
+            background: #a4a4a4;
+            color: white;
         }
 
         .modal-title {
@@ -265,6 +319,8 @@
             color: #1a1a1b;
             text-transform: uppercase;
             letter-spacing: 1px;
+            flex: 1;
+            text-align: left;
         }
 
         .stats-grid {
@@ -381,8 +437,14 @@
     <!-- Modal Statistiche -->
     <div class="modal-overlay" id="statsModal">
         <div class="modal-content">
-            <div class="modal-title">Statistiche</div>
-            <div class="stats-grid">
+            <div class="modal-header">
+                <div class="modal-title">Statistiche</div>
+                <button class="modal-minimize-btn" onclick="toggleMinimize()" title="Minimizza">
+                    <i class="fa-solid fa-minus"></i>
+                </button>
+            </div>
+            <div class="modal-content-body">
+                <div class="stats-grid">
                 <div class="stat-item">
                     <div class="stat-value" id="stat-played">0</div>
                     <div class="stat-label">Giocate</div>
@@ -411,6 +473,7 @@
             </div>
 
             <button class="modal-button" onclick="prossimoLivello()">CONTINUA</button>
+            </div>
         </div>
     </div>
 
@@ -498,10 +561,16 @@
 
         function prossimoLivello() {
             document.getElementById("statsModal").classList.remove("active");
+            document.getElementById("statsModal").classList.remove("minimized");
             level++;
             currentRow = 0;
             secretWord = getWord();
             crea();
+        }
+
+        function toggleMinimize() {
+            const modal = document.getElementById("statsModal");
+            modal.classList.toggle("minimized");
         }
 
         function aggiornaStatoCaselle() {
@@ -531,7 +600,7 @@
 
         const valoreOutput = document.getElementById("lunghezzaValore");
 
-        const len = sessionStorage.getItem("lunghezzaParola");
+        const len = sessionStorage.getItem("lunghezzaParola") || 5;
 
         // Funzione per limitare il contenuto di una casella a una sola lettera e convertire in maiuscolo
         function limitaTesto(casella) {
@@ -689,7 +758,7 @@
         }
 
         const randomSeed = parseInt(sessionStorage.getItem("randomseed")) || 0;
-        let pool = tutte[len - 3] || tutte[0];
+        let pool = [...(tutte[len - 3] || tutte[0])];
 
         function getWord() {
             const rng = mulberry32(randomSeed + level);
