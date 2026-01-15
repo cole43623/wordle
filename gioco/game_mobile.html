@@ -420,31 +420,31 @@
             </div>
             <div class="modal-content-body">
                 <div class="stats-grid">
-                <div class="stat-item">
-                    <div class="stat-value" id="stat-played">0</div>
-                    <div class="stat-label">Giocate</div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="stat-played">0</div>
+                        <div class="stat-label">Giocate</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="stat-wins">0</div>
+                        <div class="stat-label">% Vinte</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="stat-streak">0</div>
+                        <div class="stat-label">Serie</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="stat-max-streak">0</div>
+                        <div class="stat-label">Record</div>
+                    </div>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="stat-wins">0</div>
-                    <div class="stat-label">% Vinte</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="stat-streak">0</div>
-                    <div class="stat-label">Serie</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="stat-max-streak">0</div>
-                    <div class="stat-label">Record</div>
-                </div>
-            </div>
 
-            <div class="dist-container" id="dist-container"></div>
+                <div class="dist-container" id="dist-container"></div>
 
-            <div id="secretWordReveal" style="margin-bottom: 20px; display: none;">
-                La parola era: <strong id="revealedWord"></strong>
-            </div>
+                <div id="secretWordReveal" style="margin-bottom: 20px; display: none;">
+                    La parola era: <strong id="revealedWord"></strong>
+                </div>
 
-            <button class="modal-button" onclick="prossimoLivello()">CONTINUA</button>
+                <button class="modal-button" onclick="prossimoLivello()">CONTINUA</button>
             </div>
         </div>
     </div>
@@ -569,9 +569,11 @@
                 if (key.textContent === lettera) {
                     if (stato === "corretto") {
                         key.classList.remove("presente");
+                        key.classList.remove("assente");
                         key.classList.add("corretto");
                     } else if (stato === "presente") {
                         if (!key.classList.contains("corretto")) {
+                            key.classList.remove("assente");
                             key.classList.add("presente");
                         }
                     } else if (stato === "assente") {
